@@ -1,10 +1,10 @@
 /**
- *	@file		lassie-project.pde
- *	@version	0.09beta
+ *	@file		IMUino.pde
+ *	@version	0.10beta
  *
  *	@author		Francesco Cruciani, Francesco Vitullo
  *	@note		ArduIMU -> Arduino binary serial communication
- *				13/02/2011 - www.codesigns.it
+ *				15/02/2011 - www.codesigns.it
  */
 
 // pin for serial input in arduino
@@ -19,7 +19,7 @@
 // union structure for serial received binary data
 typedef union{
 	int16_t word;
-	uint8_t	valByte[2];
+	byte	valByte[2];
 } IMUpacket;
 
 // intialization of the structures for each passed value
@@ -33,7 +33,6 @@ boolean newData = false;
 // vars for checksum
 byte msg_checksum_a;
 byte msg_checksum_b;
-byte buffer[IMU_VALUES*2];
 
 // waits for receive n bytes
 void wait_for_bytes(byte number){
@@ -44,8 +43,10 @@ void wait_for_bytes(byte number){
 boolean checksum_is_true(){
 	byte current_msg_checksum_a = 0;
 	byte current_msg_checksum_b = 0;
-	for(uint8_t i=0; i<IMU_VALUES*2; i++){
-		current_msg_checksum_a += buffer[i];
+	for(uint8_t i=0; i<IMU_VALUES; i++){
+		current_msg_checksum_a += serialPackets[i].valByte[0];
+		current_msg_checksum_b += current_msg_checksum_a;
+                current_msg_checksum_a += serialPackets[i].valByte[1];
 		current_msg_checksum_b += current_msg_checksum_a;
 	}
 	
@@ -74,14 +75,14 @@ void loop(){
 				// receive all values and put it in the packet structure
 				wait_for_bytes((IMU_VALUES*2)+2);
 				
-				buffer[0] = serialPackets[0].valByte[0] = Serial.read();
-				buffer[1] = serialPackets[0].valByte[1] = Serial.read(); // roll
+				serialPackets[0].valByte[0] = Serial.read();
+				serialPackets[0].valByte[1] = Serial.read(); // roll
 				
-				buffer[2] = serialPackets[1].valByte[0] = Serial.read();
-				buffer[3] = serialPackets[1].valByte[1] = Serial.read(); // pitch
+				serialPackets[1].valByte[0] = Serial.read();
+				serialPackets[1].valByte[1] = Serial.read(); // pitch
 				
-				buffer[4] = serialPackets[2].valByte[0] = Serial.read();
-				buffer[5] = serialPackets[2].valByte[1] = Serial.read(); // yaw
+				serialPackets[2].valByte[0] = Serial.read();
+				serialPackets[2].valByte[1] = Serial.read(); // yaw
 				
 				msg_checksum_a = Serial.read();
 				msg_checksum_b = Serial.read(); // checksum
